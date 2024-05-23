@@ -1,7 +1,7 @@
 import { UserRepo } from "../repositories/user.repository";
 import bcrypt from "bcrypt";
 import { createToken } from "../utils/helper";
-
+import { UserDTO } from "../dto/user.dto";
 class UserService {
   protected userRepo;
   constructor() {
@@ -14,10 +14,8 @@ class UserService {
       const auth = await bcrypt.compare(password, user.password);
       if (auth) {
         const token = createToken(user?._id);
-        return {
-          user,
-          token: token,
-        };
+        user.token = token
+        return UserDTO.plainToClass(user);
       }
       throw Error("incorrect password");
     }
@@ -28,6 +26,16 @@ class UserService {
     const salt = await bcrypt.genSalt();
     const hasPassword = await bcrypt.hash(password, salt);
     return await this.userRepo.create({ email, password: hasPassword });
+  }
+
+  async getAllUsers() {
+    const user = await this.userRepo.find({});
+    return UserDTO.plainToClass(user);
+  }
+
+  async getUserById(id) {
+    const user = await this.userRepo.findById(id)
+    return UserDTO.plainToClass(user);
   }
 }
 
